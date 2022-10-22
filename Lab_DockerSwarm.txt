@@ -1,0 +1,64 @@
+Vagrant.configure("2") do |config|
+  config.vm.define "devops1" do |devops1|
+    devops1.vm.box = "ubuntu/focal64"
+    devops1.vm.network "public_network", ip: "192.168.15.201", hostname: true
+    devops1.vm.hostname = 'devops1'
+
+    devops1.vm.provider :virtualbox do |v1|
+      v1.customize ["modifyvm", :id, "--memory", 2048]
+	    v1.customize ["modifyvm", :id, "--cpus", 2]
+      v1.customize ["modifyvm", :id, "--name", "devops1"]
+    end
+
+    devops1.vm.provision "shell", inline: <<-'SHELL'
+      sed -i 's/^#* *\(PermitRootLogin\)\(.*\)$/\1 yes/' /etc/ssh/sshd_config
+      sed -i 's/^#* *\(PasswordAuthentication\)\(.*\)$/\1 yes/' /etc/ssh/sshd_config
+      systemctl restart sshd.service
+      echo -e "vagrant\nvagrant" | (passwd vagrant)
+      echo -e "root\nroot" | (passwd root)
+      curl -fsSL https://get.docker.com | bash
+    SHELL
+  end
+
+  config.vm.define "devops2" do |devops2|
+    devops2.vm.box = "ubuntu/focal64"
+    devops2.vm.network "public_network", ip: "192.168.15.202", hostname: true
+    devops2.vm.hostname = 'devops2'
+
+    devops2.vm.provider :virtualbox do |v2|
+      v2.customize ["modifyvm", :id, "--memory", 2048]
+	    v2.customize ["modifyvm", :id, "--cpus", 2]
+      v2.customize ["modifyvm", :id, "--name", "devops2"]
+    end
+
+    devops2.vm.provision "shell", inline: <<-'SHELL'
+      sed -i 's/^#* *\(PermitRootLogin\)\(.*\)$/\1 yes/' /etc/ssh/sshd_config
+      sed -i 's/^#* *\(PasswordAuthentication\)\(.*\)$/\1 yes/' /etc/ssh/sshd_config
+      systemctl restart sshd.service
+      echo -e "vagrant\nvagrant" | (passwd vagrant)
+      echo -e "root\nroot" | (passwd root)
+      curl -fsSL https://get.docker.com | bash
+    SHELL
+  end
+
+  config.vm.define "devops3" do |devops3|
+    devops3.vm.box = "ubuntu/focal64"
+    devops3.vm.network "public_network", ip: "192.168.15.203", hostname: true
+    devops3.vm.hostname = 'devops3'
+
+    devops3.vm.provider :virtualbox do |v3|
+      v3.customize ["modifyvm", :id, "--memory", 2048]
+	    v3.customize ["modifyvm", :id, "--cpus", 2]
+      v3.customize ["modifyvm", :id, "--name", "devops3"]
+    end
+
+    devops3.vm.provision "shell", inline: <<-'SHELL'
+      sed -i 's/^#* *\(PermitRootLogin\)\(.*\)$/\1 yes/' /etc/ssh/sshd_config
+      sed -i 's/^#* *\(PasswordAuthentication\)\(.*\)$/\1 yes/' /etc/ssh/sshd_config
+      systemctl restart sshd.service
+      echo -e "vagrant\nvagrant" | (passwd vagrant)
+      echo -e "root\nroot" | (passwd root)
+      curl -fsSL https://get.docker.com | bash
+    SHELL
+  end
+end
