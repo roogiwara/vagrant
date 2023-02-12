@@ -1,0 +1,25 @@
+
+Vagrant.configure("2") do |config|
+  config.vm.define "server01" do |server01|
+    server01.vm.box = "ubuntu/focal64"
+    server01.vm.network "private_network", ip: "10.200.200.11", virtualbox__intnet: "redenat"
+    #server01.vm.network "private_network", ip: "10.200.200.11", hostname: true
+    server01.vm.hostname = 'server01'
+
+    server01.vm.provider :virtualbox do |v1|
+      v1.customize ["modifyvm", :id, "--memory", 4096]
+      v1.customize ["modifyvm", :id, "--cpus", 4]
+      v1.customize ["modifyvm", :id, "--name", "server01"]
+      #v1.customize ["modifyvm", :id, "--nic2", "NatNetwork"]
+    end
+
+    server01.vm.provision "shell", inline: <<-'SHELL'
+      sed -i 's/^#* *\(PermitRootLogin\)\(.*\)$/\1 yes/' /etc/ssh/sshd_config
+      sed -i 's/^#* *\(PasswordAuthentication\)\(.*\)$/\1 yes/' /etc/ssh/sshd_config
+      systemctl restart sshd.service
+      echo -e "vagrant\nvagrant" | (passwd vagrant)
+      echo -e "root\nroot" | (passwd root)
+      apt-get update
+    SHELL
+  end
+end
