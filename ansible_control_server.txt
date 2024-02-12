@@ -14,6 +14,7 @@ Vagrant.configure("2") do |config|
 	ansiblemaster.vm.provision "shell", inline: <<-'SHELL'
 	  sed -i 's/^#* *\(PermitRootLogin\)\(.*\)$/\1 yes/' /etc/ssh/sshd_config
       sed -i 's/^#* *\(PasswordAuthentication\)\(.*\)$/\1 yes/' /etc/ssh/sshd_config
+	  sed -i '/^PATH=/s/$/:\/usr\/local\/bin/' ~/.bash_profile
       systemctl restart sshd.service
       echo -e "vagrant\nvagrant" | (passwd vagrant)
       echo -e "root\nroot" | (passwd root)
@@ -34,6 +35,7 @@ Vagrant.configure("2") do |config|
 	  Python-3.9.16/configure --enable-optimizations
 	  make install
 	  sed -i '/^PATH=/s/$/:\/usr\/local\/bin/' ~/.bash_profile
+	  source ~/.bash_profile
 	  pip3.9 install ansible==2.10.7
 	  pip3.9 install yamllint
 	  git config --global user.email "rodrigo.ogiwara@hotmail.com"
