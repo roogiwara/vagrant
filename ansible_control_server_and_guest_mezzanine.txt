@@ -59,6 +59,7 @@ Vagrant.configure("2") do |config|
 	  pip3.9 install yamllint
 	  chmod 600 /root/.ssh/id_rsa
 	  chmod 600 /home/vagrant/.ssh/id_rsa
+	  chown vagrant:vagrant /home/vagrant/.ssh/*
 	  eval "$(ssh-agent -s)"
 	  ssh-add ~/.ssh/id_rsa
 	  git config --global user.email "rodrigo.ogiwara@hotmail.com"
