@@ -1,0 +1,83 @@
+Vagrant.configure("2") do |config|
+  config.vm.define "web" do |web|
+	web.vm.box = "generic/ubuntu2004"
+	web.vm.network "public_network", ip: "192.168.15.202", hostname: true
+    web.vm.hostname = 'web'
+	
+	web.vm.provider "vmware_desktop" do |v|
+	  v.gui = true
+	end
+	
+	web.vm.provision "shell", inline: <<-'SHELL'
+	  sed -i 's/^#* *\(PermitRootLogin\)\(.*\)$/\1 yes/' /etc/ssh/sshd_config
+      sed -i 's/^#* *\(PasswordAuthentication\)\(.*\)$/\1 yes/' /etc/ssh/sshd_config
+      systemctl restart sshd.service
+      echo -e "vagrant\nvagrant" | (passwd vagrant)
+      echo -e "root\nroot" | (passwd root)
+	SHELL
+  end
+  
+  config.vm.define "ansiblemaster" do |ansiblemaster|
+	ansiblemaster.vm.box = "generic/centos7"
+	ansiblemaster.vm.network "public_network", ip: "192.168.15.201", hostname: true
+    ansiblemaster.vm.hostname = 'ansiblemaster'
+	
+	ansiblemaster.vm.provider "vmware_desktop" do |v|
+	  v.gui = true
+	end
+	
+	ansiblemaster.vm.provision "file", source: "C:/github/ansible_study/ssh", destination: "/tmp/"
+	ansiblemaster.vm.provision "file", source: "C:/github/ansible_study/ansible.cfg", destination: "/tmp/ansible.cfg"
+	ansiblemaster.vm.provision "file", source: "C:/github/ansible_study/ansible", destination: "/home/vagrant/"
+	
+	ansiblemaster.vm.provision "shell", inline: <<-'SHELL'
+	  sed -i 's/^#* *\(PermitRootLogin\)\(.*\)$/\1 yes/' /etc/ssh/sshd_config
+      sed -i 's/^#* *\(PasswordAuthentication\)\(.*\)$/\1 yes/' /etc/ssh/sshd_config
+	  sed -i '/^PATH=/s/$/:\/usr\/local\/bin/' ~/.bash_profile
+      systemctl restart sshd.service
+      echo -e "vagrant\nvagrant" | (passwd vagrant)
+      echo -e "root\nroot" | (passwd root)
+	  cp /tmp/ansible.cfg /root/ansible.cfg
+	  cp -r /tmp/ssh /root/.ssh
+	  cp /tmp/ansible.cfg /home/vagrant/ansible/ansible.cfg
+	  cp -r /tmp/ssh/* /home/vagrant/.ssh/
+	  yum update -y
+	  yum -y install epel-release
+	  yum -y install cowsay
+	  yum -y install sshpass
+	  yum -y groupinstall "Development Tools"
+	  yum -y install gcc-c++ make yaml-cpp yaml-cpp-devel libyaml
+	  yum -y install which git wget rsyslog unzip yum-utils gcc bzip2-devel libffi-devel
+	  yum -y install zlib-devel tar sqlite-devel openssl-devel bzip2-devel
+	  wget https://www.python.org/ftp/python/3.9.16/Python-3.9.16.tgz
+	  tar xvf Python-3.9.16.tgz
+	  Python-3.9.16/configure --enable-optimizations
+	  make install
+	  sed -i '/^PATH=/s/$/:\/usr\/local\/bin/' ~/.bash_profile
+	  source ~/.bash_profile
+	  pip3.9 install ansible==2.10.7
+	  pip3.9 install yamllint
+	  chmod 600 /root/.ssh/id_rsa
+	  chmod 600 /home/vagrant/.ssh/id_rsa
+	  eval "$(ssh-agent -s)"
+	  ssh-add ~/.ssh/id_rsa
+	  git config --global user.email "rodrigo.ogiwara@hotmail.com"
+	  git config --global user.name "rodrigo"
+	SHELL
+
+	ansiblemaster.vm.provision "shell", privileged: false, inline: <<-'SHELL'
+	  eval "$(ssh-agent -s)"
+	  ssh-add ~/.ssh/id_rsa
+	  git config --global user.email "rodrigo.ogiwara@hotmail.com"
+	  git config --global user.name "rodrigo"
+	SHELL
+	
+	ansiblemaster.vm.provision "ansible_local" do |ansible|
+	  ansible.provisioning_path = "/home/vagrant/ansible"
+	  ansible.playbook = "mezzanine.yml"
+	  ansible.verbose = true
+	  ansible.limit = "web"
+	  ansible.inventory_path = "/home/vagrant/ansible/inventory/vagrant.ini"
+	end
+  end
+end
